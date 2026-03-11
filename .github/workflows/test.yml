@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI/CD Pipeline with Docker
 
 on: [push]
 
@@ -6,41 +6,50 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  packages: write  # Tarvitaan Docker-imagen tallentamiseen
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Hae koodi
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Asenna Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
-      - name: Asenna Playwright ja testityökalut
+      - name: Asenna testityökalut
         run: |
           pip install pytest-playwright
           playwright install chromium
-
       - name: Aja testit
         run: pytest test_site.py
 
-  deploy:
-    needs: test  # TÄMÄ ON TÄRKEÄ: Julkaisu odottaa testin onnistumista!
+  # UUSI VAIHE: Docker-imagen rakennus ja tallennus (GHCR)
+  docker-build:
+    needs: test
     runs-on: ubuntu-latest
     steps:
-      - name: Hae koodi
-        uses: actions/checkout@v4
-      
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-        
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/checkout@v4
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest
+
+  deploy:
+    needs: docker-build # Nyt julkaisu odottaa myös Docker-vaiheen valmistumista
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
-          
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
+      - uses: actions/deploy-pages@v4
