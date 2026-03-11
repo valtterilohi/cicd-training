@@ -1,16 +1,23 @@
-name: Testaus ja Tarkistus
+name: Python Playwright Testi
 
 on: [push]
 
 jobs:
-  test-job:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Hae koodi
         uses: actions/checkout@v4
 
-      - name: Tarkista tiedoston olemassaolo
-        run: ls index.html
+      - name: Asenna Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
-      - name: Tarkista tiedoston sisältö
-        run: grep -q "CI/CD Training" index.html
+      - name: Asenna Playwright ja testityökalut
+        run: |
+          pip install pytest-playwright
+          playwright install chromium
+
+      - name: Aja testit
+        run: pytest test_site.py
