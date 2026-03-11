@@ -1,0 +1,16 @@
+name: Testaus ja Tarkistus
+
+on: [push]
+
+jobs:
+  test-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hae koodi
+        uses: actions/checkout@v4
+
+      - name: Tarkista tiedoston olemassaolo
+        run: ls index.html
+
+      - name: Tarkista tiedoston sisältö
+        run: grep -q "CI/CD Harjoitus" index.html
