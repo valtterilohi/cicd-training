@@ -13,4 +13,4 @@ jobs:
         run: ls index.html
 
       - name: Tarkista tiedoston sisältö
-        run: grep -q "CI/CD Harjoitus" index.html
+        run: grep -q "CI/CD Training" index.html
