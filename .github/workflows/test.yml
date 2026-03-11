@@ -1,6 +1,11 @@
-name: Python Playwright Testi
+name: CI/CD Pipeline
 
 on: [push]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
   test:
@@ -21,3 +26,21 @@ jobs:
 
       - name: Aja testit
         run: pytest test_site.py
+
+  deploy:
+    needs: test  # TÄMÄ ON TÄRKEÄ: Julkaisu odottaa testin onnistumista!
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hae koodi
+        uses: actions/checkout@v4
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+        
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+          
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
